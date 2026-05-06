@@ -14,23 +14,27 @@ const AZURE = {
     DELETE: "https://prod-05.italynorth.logic.azure.com:443/workflows/5ed435e5b84f435abbb8df764be417e5/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=cJTmJuSi6aBBG_QKtZQaU5Jhjo37EA4f1bcHQYhONqM"
 };
 async function uploadFileToBlob(file) {
-    const fileName = `${Date.now()}-${file.name}`;
-    const uploadUrl = `${BLOB_CONTAINER_SAS_URL}/${fileName}`;
+    const safeFileName = file.name.replace(/\s+/g, "-");
+    const fileName = `${Date.now()}-${safeFileName}`;
+
+    const [containerUrl, sasToken] = BLOB_CONTAINER_SAS_URL.split("?");
+    const uploadUrl = `${containerUrl}/${fileName}?${sasToken}`;
 
     const response = await fetch(uploadUrl, {
         method: "PUT",
         headers: {
             "x-ms-blob-type": "BlockBlob",
-            "Content-Type": file.type
+            "Content-Type": file.type || "application/octet-stream"
         },
         body: file
     });
 
     if (!response.ok) {
-        throw new Error("Blob upload failed");
+        const errorText = await response.text();
+        throw new Error(errorText || "Blob upload failed");
     }
 
-    return uploadUrl.split("?")[0];
+    return `${containerUrl}/${fileName}`;
 }
 
 
