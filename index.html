@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Black Lotus - Multimedia Sharing Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- HEADER -->
+    <header>
+        <div class="logo">
+            <span></span>
+            <h1>Black Lotus</h1>
+        </div>
+        <nav>
+            <button class="nav-btn" onclick="showSection('home')">Home</button>
+            <button class="nav-btn" onclick="showSection('upload')">Upload</button>
+            <button class="nav-btn" onclick="showSection('gallery')">Gallery</button>
+            <button class="nav-btn active-nav" onclick="showSection('login')">Login</button>
+        </nav>
+    </header>
+
+    <!-- ===================== HOME ===================== -->
+    <section id="home" class="section active">
+        <div class="hero">
+            <h2>Share Your World</h2>
+            <p>Upload images, videos and audio. Powered by Microsoft Azure.</p>
+            <button class="btn-primary" onclick="showSection('upload')">⬆ Start Uploading</button>
+        </div>
+
+        <!-- Featured Media Feed -->
+        <div class="feed-title">
+            <h3>Latest Uploads</h3>
+            <span class="badge">Azure Cosmos DB</span>
+        </div>
+        <div class="feed" id="home-feed"></div>
+    </section>
+
+    <!-- ===================== UPLOAD ===================== -->
+    <section id="upload" class="section">
+        <div class="page-header">
+            <h2>Upload Media</h2>
+            <p>Files stored in Azure Blob Storage · Metadata saved to Cosmos DB</p>
+        </div>
+
+        <div class="form-card">
+            <!-- Step indicators -->
+            <div class="steps">
+                <div class="step active-step">1 · Details</div>
+                <div class="step-line"></div>
+                <div class="step">2 · Azure</div>
+                <div class="step-line"></div>
+                <div class="step">3 · Done</div>
+            </div>
+
+            <label>Media Title *</label>
+            <input type="text" id="upload-title" placeholder="e.g. Sunset at the Park" />
+
+            <label>Your User ID *</label>
+            <input type="text" id="upload-userId" placeholder="e.g. user123" />
+
+            <label>Media Type</label>
+            <div class="type-selector">
+                <button class="type-btn selected" onclick="selectType(this,'image')">🖼 Image</button>
+                <button class="type-btn" onclick="selectType(this,'video')">🎬 Video</button>
+                <button class="type-btn" onclick="selectType(this,'audio')">🎵 Audio</button>
+            </div>
+            <input type="hidden" id="upload-type" value="image" />
+
+            <label>Tags <span style="font-weight:300;font-size:13px;">(comma separated)</span></label>
+            <input type="text" id="upload-tags" placeholder="e.g. nature, travel, sunset" />
+
+            <label>Azure Blob URL <span style="font-weight:300;font-size:13px;">(paste after uploading to Blob Storage)</span></label>
+            <input type="text" id="upload-blobUrl" placeholder="https://blacklotusstorage.blob.core.windows.net/media-uploads/..." />
+
+            <button class="btn-primary full" onclick="createMedia()">⬆ Upload to Azure Cosmos DB</button>
+
+            <div id="upload-result" class="result-box" style="display:none;"></div>
+        </div>
+    </section>
+
+    <!-- ===================== GALLERY ===================== -->
+    <section id="gallery" class="section">
+        <div class="page-header">
+            <h2>Media Gallery</h2>
+            <p>Browse, search, edit and delete media · Azure Cosmos DB</p>
+        </div>
+
+        <div class="gallery-toolbar">
+            <input type="text" id="search-userId" placeholder="🔍 Filter by User ID..." />
+            <button class="btn-primary" onclick="getMedia()">Search</button>
+            <button class="btn-outline" onclick="getAllMedia()">Show All</button>
+        </div>
+
+        <div id="gallery-result" class="result-box" style="display:none;margin:0 30px 10px;"></div>
+        <div class="feed" id="gallery-feed"></div>
+    </section>
+
+    <!-- ===================== LOGIN ===================== -->
+    <section id="login" class="section">
+        <div class="page-header">
+            <h2>Account</h2>
+            <p>User data stored in Azure SQL Database</p>
+        </div>
+
+        <div class="form-card">
+            <div class="tab-row">
+                <button class="tab active-tab" onclick="switchTab(this,'login-form')">Login</button>
+                <button class="tab" onclick="switchTab(this,'register-form')">Register</button>
+            </div>
+
+            <!-- Login -->
+            <div id="login-form">
+                <label>Email</label>
+                <input type="email" id="login-email" placeholder="you@example.com" />
+                <label>Password</label>
+                <input type="password" id="login-password" placeholder="••••••••" />
+                <button class="btn-primary full" onclick="loginUser()">Login</button>
+            </div>
+
+            <!-- Register -->
+            <div id="register-form" style="display:none;">
+                <label>Username</label>
+                <input type="text" id="reg-username" placeholder="Choose a username" />
+                <label>Email</label>
+                <input type="email" id="reg-email" placeholder="you@example.com" />
+                <label>Password</label>
+                <input type="password" id="reg-password" placeholder="••••••••" />
+                <label>Role</label>
+                <select id="reg-role">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                </select>
+                <button class="btn-primary full" onclick="registerUser()">Create Account</button>
+            </div>
+
+            <div id="login-result" class="result-box" style="display:none;margin-top:15px;"></div>
+        </div>
+    </section>
+
+    <!-- ===================== EDIT MODAL ===================== -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>✏️ Edit Media</h3>
+            <label>New Title</label>
+            <input id="edit-title" type="text" />
+            <label>New Tags</label>
+            <input id="edit-tags" type="text" placeholder="comma separated" />
+            <input type="hidden" id="edit-id" />
+            <div class="modal-actions">
+                <button class="btn-primary" onclick="updateMedia()">Save to Azure</button>
+                <button class="btn-outline" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast"></div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
