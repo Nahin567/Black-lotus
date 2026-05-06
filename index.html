@@ -74,9 +74,8 @@
             <label>Tags <span style="font-weight:300;font-size:13px;">(comma separated)</span></label>
             <input type="text" id="upload-tags" placeholder="e.g. nature, travel, sunset" />
 
-            <label>Azure Blob URL <span style="font-weight:300;font-size:13px;">(paste after uploading to Blob Storage)</span></label>
-            <input type="text" id="upload-blobUrl" placeholder="https://blacklotusstorage.blob.core.windows.net/media-uploads/..." />
-
+            <input type="file" id="mediaFile" accept="image/*,video/*,audio/*" required>
+            
             <button class="btn-primary full" onclick="createMedia()">⬆ Upload to Azure Cosmos DB</button>
 
             <div id="upload-result" class="result-box" style="display:none;"></div>

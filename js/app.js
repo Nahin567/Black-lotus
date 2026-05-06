@@ -1,18 +1,39 @@
-// ================================================================
-//  BLACK LOTUS - Multimedia Sharing Platform
-//  app.js - Full CRUD wired to Azure Logic Apps
-//  Student: Nahin Ahmed Mojumder | B00976705
-// ================================================================
+// ---------------------------------------------------------------
+
+const BLOB_CONTAINER_SAS_URL = "https://blacklotusstorage2026.blob.core.windows.net/media-uploads?sp=racwl&st=2026-05-06T15:56:56Z&se=2026-05-30T00:11:56Z&spr=https&sv=2025-11-05&sr=c&sig=ZPMKj8B8SR%2BvVcCmVmH2uJKPqX6OOmw1LSMXF68QRv4%3D";
 
 // ---------------------------------------------------------------
-//  PASTE YOUR AZURE LOGIC APP URLs HERE (after setting up Azure)
-// ---------------------------------------------------------------
+
 const AZURE = {
-    CREATE: "https://prod-03.italynorth.logic.azure.com:443/workflows/f30074ce666f40398e7769ff42dcddb5/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=ko9b9qOrwxTa-PI0-jENNEzBjy_A0rBwdXX5Fjg2ZmY",   
-    GET:    "https://prod-08.italynorth.logic.azure.com:443/workflows/8df91021c6484d889a091e28a506cd05/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=ef5hIfkRm5SWNscAhT-QoI5W6bxQnKeVdniWZQOpRYo",     
-    UPDATE: "https://prod-06.italynorth.logic.azure.com:443/workflows/2380a7b5df4746e4bc29669f86c7e0cb/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=7-rgAZRJCjlXU7om66NgGHfn5on-KbMr3p5njHlEKBc",   
-    DELETE: "https://prod-05.italynorth.logic.azure.com:443/workflows/5ed435e5b84f435abbb8df764be417e5/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=cJTmJuSi6aBBG_QKtZQaU5Jhjo37EA4f1bcHQYhONqM"    
+    CREATE: "https://prod-03.italynorth.logic.azure.com:443/workflows/f30074ce666f40398e7769ff42dcddb5/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=ko9b9qOrwxTa-PI0-jENNEzBjy_A0rBwdXX5Fjg2ZmY",
+
+    GET: "https://prod-08.italynorth.logic.azure.com:443/workflows/8df91021c6484d889a091e28a506cd05/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=ef5hIfkRm5SWNscAhT-QoI5W6bxQnKeVdniWZQOpRYo",
+
+    UPDATE: "https://prod-06.italynorth.logic.azure.com:443/workflows/2380a7b5df4746e4bc29669f86c7e0cb/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=7-rgAZRJCjlXU7om66NgGHfn5on-KbMr3p5njHlEKBc",
+
+    DELETE: "https://prod-05.italynorth.logic.azure.com:443/workflows/5ed435e5b84f435abbb8df764be417e5/triggers/When_an_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_an_HTTP_request_is_received%2Frun&sv=1.0&sig=cJTmJuSi6aBBG_QKtZQaU5Jhjo37EA4f1bcHQYhONqM"
 };
+async function uploadFileToBlob(file) {
+    const fileName = `${Date.now()}-${file.name}`;
+    const uploadUrl = `${BLOB_CONTAINER_SAS_URL}/${fileName}`;
+
+    const response = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: {
+            "x-ms-blob-type": "BlockBlob",
+            "Content-Type": file.type
+        },
+        body: file
+    });
+
+    if (!response.ok) {
+        throw new Error("Blob upload failed");
+    }
+
+    return uploadUrl.split("?")[0];
+}
+
+
 
 // ---------------------------------------------------------------
 //  DEMO DATA (used when Azure URLs not yet configured)
@@ -152,10 +173,31 @@ async function createMedia() {
     const userId  = document.getElementById('upload-userId').value.trim();
     const type    = document.getElementById('upload-type').value;
     const tagsRaw = document.getElementById('upload-tags').value;
-    const blobUrl = document.getElementById('upload-blobUrl').value.trim();
 
     if (!title || !userId) {
         showToast('⚠️ Please fill in Title and User ID');
+        return;
+    }
+
+    const fileInput = document.getElementById('mediaFile');
+    const file = fileInput.files[0];
+
+    if (!file) {
+        showToast('⚠️ Please choose a media file');
+        return;
+    }
+
+    const resultBox = document.getElementById('upload-result');
+    resultBox.style.display = 'block';
+    resultBox.textContent = '⏳ Uploading file to Azure Blob Storage...';
+
+    let blobUrl = '';
+
+    try {
+        blobUrl = await uploadFileToBlob(file);
+    } catch (err) {
+        resultBox.textContent = '❌ Blob upload failed: ' + err.message;
+        showToast('❌ File upload failed');
         return;
     }
 
@@ -165,39 +207,31 @@ async function createMedia() {
         title,
         mediaType: type,
         tags: tagsRaw.split(',').map(t => t.trim()).filter(Boolean),
-        blobUrl: blobUrl || '',
+        blobUrl: blobUrl,
         uploadedAt: new Date().toISOString()
     };
 
-    const resultBox = document.getElementById('upload-result');
-    resultBox.style.display = 'block';
-
     if (isAzureConnected()) {
-        resultBox.textContent = '⏳ Sending to Azure Cosmos DB...';
+        resultBox.textContent = '⏳ File uploaded. Sending metadata to Azure Cosmos DB...';
         try {
             const res = await fetch(AZURE.CREATE, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
+
             const data = await res.json();
-            resultBox.textContent = '✅ Saved to Azure Cosmos DB:\n\n' + JSON.stringify(data, null, 2);
+            resultBox.textContent = '✅ File uploaded to Blob Storage and saved to Cosmos DB:\n\n' + JSON.stringify(data, null, 2);
             showToast('✅ Uploaded to Azure!');
             localMedia.unshift(payload);
             return;
         } catch (err) {
-            resultBox.textContent = '⚠️ Azure error: ' + err.message + '\n\nSaved locally.';
+            resultBox.textContent = '⚠️ Cosmos DB save failed: ' + err.message + '\n\nFile was uploaded to Blob Storage.';
         }
-    } else {
-        resultBox.textContent =
-            '📋 DEMO MODE (Azure URLs not set yet)\n\n' +
-            'Payload that will be sent to Azure Cosmos DB:\n\n' +
-            JSON.stringify(payload, null, 2) +
-            '\n\n✅ Saved to local demo data.';
     }
 
     localMedia.unshift(payload);
-    showToast('✅ Media saved (demo mode)');
+    showToast('✅ Media saved');
 }
 
 // ---------------------------------------------------------------
