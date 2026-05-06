@@ -250,7 +250,13 @@ async function getAllMedia() {
         try {
             const res = await fetch(AZURE.GET);
             const data = await res.json();
-            const items = Array.isArray(data) ? data : (data.value || data.documents || []);
+            const items =
+    Array.isArray(data) ? data :
+    Array.isArray(data.value) ? data.value :
+    Array.isArray(data.Documents) ? data.Documents :
+    Array.isArray(data.documents) ? data.documents :
+    Array.isArray(data.body) ? data.body :
+    [];
             localMedia = items;
             resultBox.textContent = `✅ Loaded ${items.length} records from Azure Cosmos DB`;
             renderFeed('gallery-feed', items);
